@@ -1,136 +1,90 @@
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// #include "opencv2/imgproc/imgproc.hpp"
-// #include "opencv2/highgui/highgui.hpp"
-// #include <iostream>
-
-// using namespace std;
-// using namespace cv;
-
-// int main( int argc, char** argv )
-// {
-//      // Read original image 
-//      Mat src = imread("Lenna.png");
-
-//      //if fail to read the image
-//      if (!src.data) 
-//      { 
-//           cout << "Error loading the image" << endl;
-//           return -1; 
-//      }
-
-//      // Create a window
-//      namedWindow("My Window", 1);
-
-//      //Create trackbar to change brightness
-//      int iSliderValue1 = 50;
-//      createTrackbar("Brightness", "My Window", &iSliderValue1, 100);
-
-//      //Create trackbar to change contrast
-//      int iSliderValue2 = 50;
-//      createTrackbar("Contrast", "My Window", &iSliderValue2, 100);
-
-//      while (true)
-//      {
-//           //Change the brightness and contrast of the image (For more infomation http://opencv-srf.blogspot.com/2013/07/change-contrast-of-image-or-video.html)
-//           Mat dst;
-//           int iBrightness  = iSliderValue1 - 50;
-//           double dContrast = iSliderValue2 / 50.0;
-//           src.convertTo(dst, -1, dContrast, iBrightness); 
-
-//           //show the brightness and contrast adjusted image
-//           imshow("My Window", dst);
-
-//           // Wait until user press some key for 50ms
-//           int iKey = waitKey(50);
-
-//           //if user press 'ESC' key
-//           if (iKey == 27)
-//           {
-//                break;
-//           }
-//      }
-
-//      return 0;
-// }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include <iostream>
-
-using namespace std;
-using namespace cv;
-
-Mat src;
-// VideoCapture cap(0);
-void MyCallbackForBrightness(int iValueForBrightness, void *userData)
+/**
+ * Code for thinning a binary image using Zhang-Suen algorithm.
+ */
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
+/**
+ * Perform one thinning iteration.
+ * Normally you wouldn't call this function directly from your code.
+ *
+ * @param  im    Binary image with range = 0-1
+ * @param  iter  0=even, 1=odd
+ */
+void thinningIteration(cv::Mat& im, int iter)
 {
-     Mat dst;
-     int iValueForContrast = *( static_cast<int*>(userData) );
-
-     //Calculating brightness and contrast value
-     int iBrightness = iValueForBrightness - 50;
-     double dContrast = iValueForContrast / 50.0;
-
-     //Calculated contrast and brightness value
-     cout << "MyCallbackForBrightness : Contrast=" << dContrast << ", Brightness=" << iBrightness << endl;
-
-     //adjust the brightness and contrast
-     src.convertTo(dst, -1, dContrast, iBrightness); 
-
-     //show the brightness and contrast adjusted image
-     imshow("My Window", dst);
-}
-
-void MyCallbackForContrast(int iValueForContrast, void *userData)
-{
-     Mat dst;
-     int iValueForBrightness = *( static_cast<int*>(userData) );
-
-     //Calculating brightness and contrast value
-     int iBrightness = iValueForBrightness - 50;
-     double dContrast = iValueForContrast / 50.0;
-
-     //Calculated contrast and brightness value
-     cout << "MyCallbackForContrast : Contrast=" << dContrast << ", Brightness=" << iBrightness << endl;
-
-     //adjust the brightness and contrast
-     src.convertTo(dst, -1, dContrast, iBrightness); 
-
-     //show the brightness and contrast adjusted image
-     imshow("My Window", dst);
-}
-
-
-
-int main(int argc, char** argv)
-{
-     // Read original image 
-     src = imread("../common/Lenna.png");
-
-     //if fail to read the image
-    if (*src.data == false) 
-    { 
-          cout << "Error loading the image" << endl;
-          return -1; 
+    cv::Mat marker = cv::Mat::zeros(im.size(), CV_8UC1);
+ 
+    for (int i = 1; i < im.rows-1; i++)
+    {
+        for (int j = 1; j < im.cols-1; j++)
+        {
+            uchar p2 = im.at<uchar>(i-1, j);
+            uchar p3 = im.at<uchar>(i-1, j+1);
+            uchar p4 = im.at<uchar>(i, j+1);
+            uchar p5 = im.at<uchar>(i+1, j+1);
+            uchar p6 = im.at<uchar>(i+1, j);
+            uchar p7 = im.at<uchar>(i+1, j-1);
+            uchar p8 = im.at<uchar>(i, j-1);
+            uchar p9 = im.at<uchar>(i-1, j-1);
+ 
+            int A  = (p2 == 0 && p3 == 1) + (p3 == 0 && p4 == 1) + 
+                     (p4 == 0 && p5 == 1) + (p5 == 0 && p6 == 1) + 
+                     (p6 == 0 && p7 == 1) + (p7 == 0 && p8 == 1) +
+                     (p8 == 0 && p9 == 1) + (p9 == 0 && p2 == 1);
+            int B  = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+            int m1 = iter == 0 ? (p2 * p4 * p6) : (p2 * p4 * p8);
+            int m2 = iter == 0 ? (p4 * p6 * p8) : (p2 * p6 * p8);
+ 
+            if (A == 1 && (B >= 2 && B <= 6) && m1 == 0 && m2 == 0)
+                marker.at<uchar>(i,j) = 1;
+        }
     }
-
-    // Create a window
-    namedWindow("My Window", 1);
-
-    int iValueForBrightness = 50;
-    int iValueForContrast = 50;
-
-    //Create track bar to change brightness
-    createTrackbar("Brightness", "My Window", &iValueForBrightness, 100, MyCallbackForBrightness, &iValueForContrast);
-
-    //Create track bar to change contrast
-    createTrackbar("   Contrast", "My Window", &iValueForContrast, 100, MyCallbackForContrast, &iValueForBrightness);
-  
-    imshow("My Window", src);
-
-    // Wait until user press some key
-    waitKey(0);
-
+ 
+    im &= ~marker;
+}
+ 
+/**
+ * Function for thinning the given binary image
+ *
+ * @param  im  Binary image with range = 0-255
+ */
+void thinning(cv::Mat& im)
+{
+    im /= 255;
+ 
+    cv::Mat prev = cv::Mat::zeros(im.size(), CV_8UC1);
+    cv::Mat diff;
+ 
+    do {
+        thinningIteration(im, 0);
+        thinningIteration(im, 1);
+        cv::absdiff(im, prev, diff);
+        im.copyTo(prev);
+    } 
+    while (cv::countNonZero(diff) > 0);
+ 
+    im *= 255;
+}
+ 
+/**
+ * This is an example on how to call the thinning function above.
+ */
+int main()
+{
+    cv::Mat src = cv::imread("../common/chnr.png");
+    if (src.empty())
+        return -1;
+ 
+    cv::Mat bw;
+    cv::cvtColor(src, bw,  cv::COLOR_RGB2GRAY);
+    cv::threshold(bw, bw, 10, 255, cv::THRESH_BINARY);
+ 
+    thinning(bw);
+ 
+    cv::imshow("src", src);
+    cv::imshow("dst", bw);
+    cv::waitKey(0);
+ 
     return 0;
 }

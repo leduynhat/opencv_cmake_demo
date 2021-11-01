@@ -1,3 +1,0 @@
-/home/nhatld5/Documents/01_Implements/00_C_Cpp/opencv_demo/build/CMakeFiles/rebuild_cache.dir
-/home/nhatld5/Documents/01_Implements/00_C_Cpp/opencv_demo/build/CMakeFiles/helloOpenCV.dir
-/home/nhatld5/Documents/01_Implements/00_C_Cpp/opencv_demo/build/CMakeFiles/edit_cache.dir
