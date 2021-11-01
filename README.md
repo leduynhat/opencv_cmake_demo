@@ -1,7 +1,9 @@
 ## OpenCV using cmake demo on ubuntu
 
-1. Install opencv into your system follow this instuction https://linuxize.com/post/how-to-install-opencv-on-ubuntu-20-04/
-
+1. Install opencv into your system follow this instuction
+```sh
+https://linuxize.com/post/how-to-install-opencv-on-ubuntu-20-04/
+```
 2. Export path 
 ```sh
 sudo gedit ~/.bashrc
